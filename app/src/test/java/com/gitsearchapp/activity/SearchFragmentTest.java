@@ -12,6 +12,9 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
 import static junit.framework.Assert.assertTrue;
 
 /**
@@ -20,15 +23,18 @@ import static junit.framework.Assert.assertTrue;
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class SearchFragmentTest {
-    private Button btnSearch;
-    private EditText edSearch;
+
+    @InjectView(R.id.btnSearch)
+    Button btnSearch;
+
+    @InjectView(R.id.edSearch)
+    EditText edSearch;
     private SearchActivity searchActivity;
 
     @Before
     public void setUp(){
         searchActivity = Robolectric.setupActivity(SearchActivity.class);
-        btnSearch = (Button) searchActivity.findViewById(R.id.btnSearch);
-        edSearch = (EditText) searchActivity.findViewById(R.id.edSearch);
+        ButterKnife.inject(searchActivity);
     }
 
     @Test
