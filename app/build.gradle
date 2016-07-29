@@ -1,6 +1,25 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.13.+'
+    }
+}
 apply plugin: 'com.android.application'
 
+repositories {
+    mavenCentral()
+}
+
 android {
+
+    lintOptions {
+        abortOnError true
+        checkAllWarnings true
+        warningsAsErrors true
+    }
+
     compileSdkVersion 21
     buildToolsVersion "23.0.3"
 
@@ -10,11 +29,32 @@ android {
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
+        def greenhouseBuild = System.getenv()["GREENHOUSE_BUILD"]
+        if (greenhouseBuild) {
+            def buildNumber = System.getenv()["BUILD_NUMBER"]
+            versionName = "1.0." + buildNumber
+            versionCode = Integer.valueOf(buildNumber)
+        }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("release.keystore")
+            storePassword "a12345"
+            keyAlias "ycan"
+            keyPassword "a12345"
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            runProguard true
         }
     }
 }
