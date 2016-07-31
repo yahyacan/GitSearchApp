@@ -8,8 +8,11 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.gitsearchapp.fragment.SearchFragment;
 import com.gitsearchapp.fragment.SearchResultFragment;
+import io.fabric.sdk.android.Fabric;
 
 public class SearchActivity extends FragmentActivity implements SearchFragment.OnClickListener{
 
@@ -18,6 +21,7 @@ public class SearchActivity extends FragmentActivity implements SearchFragment.O
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,

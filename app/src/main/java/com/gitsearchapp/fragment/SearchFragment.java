@@ -42,7 +42,7 @@ public class SearchFragment extends Fragment {
             listener = (OnClickListener) activity;
         } else {
             throw new ClassCastException(activity.toString()
-                    + " must implement MyListFragment.OnItemSelectedListener");
+                    + " must implement SearchFragment.OnClickListener");
         }
     }
 
