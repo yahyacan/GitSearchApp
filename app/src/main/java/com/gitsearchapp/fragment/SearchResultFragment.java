@@ -3,6 +3,7 @@ package com.gitsearchapp.fragment;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
@@ -12,8 +13,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 
 import com.gitsearchapp.activity.R;
-import com.gitsearchapp.adapter.EndlessRecyclerViewScrollListener;
 import com.gitsearchapp.adapter.RepoListAdapter;
+import com.gitsearchapp.listener.OnLoadMoreListener;
 import com.gitsearchapp.model.Repo;
 import com.gitsearchapp.util.ProjectPreferences;
 import com.google.gson.Gson;
@@ -39,6 +40,7 @@ public class SearchResultFragment extends Fragment {
     ImageButton btnChangeSpan;
 
     private StaggeredGridLayoutManager mStaggeredLayoutManager;
+    private LinearLayoutManager manager;
 
     private ProgressDialog pdialog;
 
@@ -49,18 +51,15 @@ public class SearchResultFragment extends Fragment {
     private int spanCount = 1;
 
     private List<Repo> repos = new ArrayList<>();
+    RepoListAdapter mRepoListAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.f_search_result, container, false);
         ButterKnife.inject(this, view);
-        return view;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         mStaggeredLayoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
+        manager = new LinearLayoutManager(getActivity());
+        mStaggeredLayoutManager.setSpanCount(1);
         mRecyclerView.setLayoutManager(mStaggeredLayoutManager);
         Bundle bundle = getArguments();
         if (bundle != null) {
@@ -69,15 +68,24 @@ public class SearchResultFragment extends Fragment {
             searchRepo(link);
         }
 
-        mRecyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(mStaggeredLayoutManager) {
+        return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        mRepoListAdapter = new RepoListAdapter(mRecyclerView,repos,getActivity());
+        mRecyclerView.setAdapter(mRepoListAdapter);
+
+        mRepoListAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
-            public void onLoadMore(int page, int totalItemsCount) {
+            public void onLoadMore() {
+                Log.e("haint", "Load More");
+                repos.add(null);
+                mRepoListAdapter.notifyItemInserted(repos.size() - 1);
 
-                int curSize = totalItemsCount;
-                pageIndex = page;
-                Log.e("API",String.format(getResources().getString(R.string.post_link), username, pageIndex, getResources().getInteger(R.integer.per_page)));
                 searchRepo(String.format(getResources().getString(R.string.post_link), username, pageIndex, getResources().getInteger(R.integer.per_page)));
-
             }
         });
 
@@ -105,24 +113,31 @@ public class SearchResultFragment extends Fragment {
 
             @Override
             public void onStart() {
-                pdialog = ProjectPreferences.dialogShow(getActivity(), "Loading repos!", "Please wait...");
+                if (pageIndex == 0)
+                    pdialog = ProjectPreferences.dialogShow(getActivity(), "Loading repos!", "Please wait...");
             }
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                if (repos != null && repos.size() > 0){
+                    repos.remove(repos.size() - 1);
+                    mRepoListAdapter.notifyItemRemoved(repos.size());
+                }
+
                 String result = new String(response);
                 Type listType = new TypeToken<ArrayList<Repo>>() {
                 }.getType();
                 final List<Repo> reposTemp = gson.fromJson(result, listType);
-                //Log.e("RESULT", result);
-                int currSize = repos.size();
                 repos.addAll(reposTemp);
-                final RepoListAdapter adapter = new RepoListAdapter(getActivity(), repos);
-                mRecyclerView.setAdapter(adapter);
-                adapter.notifyItemRangeInserted(currSize, repos.size() - 1);
-                //mStaggeredLayoutManager.setSpanCount(2);
 
-                pdialog.dismiss();
+                mRepoListAdapter.notifyDataSetChanged();
+                mRepoListAdapter.setLoaded();
+
+
+                if (pageIndex == 0)
+                    pdialog.dismiss();
+
+                pageIndex += 1;
             }
 
             @Override
