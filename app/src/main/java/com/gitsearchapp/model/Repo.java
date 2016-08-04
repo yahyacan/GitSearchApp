@@ -1,8 +1,5 @@
 package com.gitsearchapp.model;
 
-/**
- * Created by yahya on 28/07/16.
- */
 public class Repo {
     private long id;
     private String name;

@@ -4,4 +4,16 @@
     <!--Button Texts -->
     <string name="btnSearch">Search</string>
     <string name="post_link">https://api.github.com/users/%1$s/repos?type=owner/page=%2$d&amp;per_page=%3$d</string>
+    
+    <string name="name">Name : </string>
+    <string name="git_url">Git URL : </string>
+    <string name="ssh_url">SSH URL : </string>
+    <string name="clone_url">Clone URL : </string>
+    <string name="language">Language : </string>
+    <string name="created_at">Created Date : </string>
+    <string name="updated_at">Updated Date : </string>
+    <string name="pushed_at">Pushed Date : </string>
+
+    <string name="repo_detail">Repo Detail</string>
+    <string name="ok">Ok</string>
 </resources>

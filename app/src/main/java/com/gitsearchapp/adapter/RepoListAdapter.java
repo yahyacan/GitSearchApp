@@ -1,11 +1,14 @@
 package com.gitsearchapp.adapter;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -15,10 +18,13 @@ import com.gitsearchapp.model.Repo;
 
 import java.util.List;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
 public class RepoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private final int VIEW_TYPE_ITEM = 0;
-    private final int VIEW_TYPE_LOADING = 1;
+    private static final int VIEW_TYPE_ITEM = 0;
+    private static final int VIEW_TYPE_LOADING = 1;
 
     private OnLoadMoreListener mOnLoadMoreListener;
 
@@ -34,16 +40,14 @@ public class RepoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.cntx = context;
         this.data = list;
         this.mRecyclerView = recyclerView;
-        final StaggeredGridLayoutManager linearLayoutManager = (StaggeredGridLayoutManager) mRecyclerView.getLayoutManager();
-        lastPositions = new int[linearLayoutManager.getSpanCount()];
+        final GridLayoutManager mGridLayoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
+        lastPositions = new int[mGridLayoutManager.getSpanCount()];
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
-                totalItemCount = linearLayoutManager.getItemCount();
-                linearLayoutManager.findLastVisibleItemPositions(lastPositions);
-                lastVisibleItem = findMax(lastPositions);
+                totalItemCount = mGridLayoutManager.getItemCount();
+                lastVisibleItem = mGridLayoutManager.findLastCompletelyVisibleItemPosition();
 
                 if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                     if (mOnLoadMoreListener != null) {
@@ -53,16 +57,6 @@ public class RepoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 }
             }
         });
-    }
-
-    private int findMax(int[] lastPositions) {
-        int max = lastPositions[0];
-        for (int value : lastPositions) {
-            if (value > max) {
-                max = value;
-            }
-        }
-        return max;
     }
 
     public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
@@ -93,6 +87,11 @@ public class RepoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             ViewHolder viewHolder = (ViewHolder) holder;
             viewHolder.txtName.setText(repo.getName());
             viewHolder.txtDescription.setText(repo.getDescription());
+            viewHolder.txtStarCount.setText("" + repo.getStargazers_count());
+            if (repo.isFork())
+                viewHolder.imgConnectType.setBackgroundResource(R.mipmap.ic_call_split_black_48dp);
+            else
+                viewHolder.imgConnectType.setBackgroundResource(R.mipmap.ic_cloud_upload_black_48dp);
         } else if (holder instanceof LoadingViewHolder) {
             LoadingViewHolder loadingViewHolder = (LoadingViewHolder) holder;
             loadingViewHolder.progressBar.setIndeterminate(true);
@@ -108,14 +107,49 @@ public class RepoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         isLoading = false;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView txtName;
-        public TextView txtDescription;
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        @InjectView(R.id.txtName) TextView txtName;
+        @InjectView(R.id.txtDescription) TextView txtDescription;
+        @InjectView(R.id.txtStarCount) TextView txtStarCount;
+        @InjectView(R.id.imgConnectType) ImageView imgConnectType;
+
 
         public ViewHolder(View itemView) {
             super(itemView);
-            txtName = (TextView) itemView.findViewById(R.id.txtName);
-            txtDescription = (TextView) itemView.findViewById(R.id.txtDescription);
+            ButterKnife.inject(this,itemView);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            openDetailDialog(data.get(getPosition()));
+        }
+
+        public void openDetailDialog(Repo repo){
+            final Dialog dialog=new Dialog(cntx,android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+            dialog.setContentView(R.layout.repo_detail_dialog);
+            dialog.setTitle(cntx.getString(R.string.repo_detail));
+
+            TextView txtName = (TextView) dialog.findViewById(R.id.txtName);
+            TextView txtGitUrl = (TextView) dialog.findViewById(R.id.txtGitUrl);
+            TextView txtSshUrl = (TextView) dialog.findViewById(R.id.txtSshUrl);
+            TextView txtCloneUrl = (TextView) dialog.findViewById(R.id.txtCloneUrl);
+
+            txtName.setText(repo.getName());
+            txtGitUrl.setText(repo.getGit_url());
+            txtSshUrl.setText(repo.getSsh_url());
+            txtCloneUrl.setText(repo.getClone_url());
+
+
+            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
+            dialogButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+
+            dialog.show();
         }
     }
 

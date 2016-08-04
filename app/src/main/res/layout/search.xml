@@ -4,25 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".SearchActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/white">
 
-    <!--<fragment
-        android:id="@+id/fragment_search"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        class="com.gitsearchapp.fragment.SearchFragment"
-        tools:layout="@layout/f_search">
-    </fragment>
 
-    <fragment
-        android:id="@+id/fragment_search_result"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        class="com.gitsearchapp.fragment.SearchResultFragment"
-        tools:layout="@layout/f_search_result">
-    </fragment>-->
 
     <FrameLayout
         android:id="@+id/fragment_container"
