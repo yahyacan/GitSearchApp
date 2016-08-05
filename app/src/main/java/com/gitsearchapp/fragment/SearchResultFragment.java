@@ -16,20 +16,18 @@ import com.gitsearchapp.adapter.RepoListAdapter;
 import com.gitsearchapp.decorator.DividerItemDecoration;
 import com.gitsearchapp.listener.OnLoadMoreListener;
 import com.gitsearchapp.model.Repo;
+import com.gitsearchapp.service.ApiClient;
+import com.gitsearchapp.service.IRepo;
 import com.gitsearchapp.util.ProjectPreferences;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
-import cz.msebera.android.httpclient.Header;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SearchResultFragment extends Fragment {
 
@@ -64,7 +62,8 @@ public class SearchResultFragment extends Fragment {
         if (bundle != null) {
             String link = bundle.getString(EXTRA_URL);
             username = bundle.getString(USERNAME);
-            searchRepo(link);
+            searchRepo(username,"owner",0,getResources().getInteger(R.integer.per_page));
+            //searchRepo(link);
         }
 
         mRepoListAdapter = new RepoListAdapter(mRecyclerView, repos, getActivity());
@@ -75,7 +74,8 @@ public class SearchResultFragment extends Fragment {
             public void onLoadMore() {
                 repos.add(null);
                 mRepoListAdapter.notifyItemInserted(repos.size() - 1);
-                searchRepo(String.format(getResources().getString(R.string.post_link), username, pageIndex, getResources().getInteger(R.integer.per_page)));
+                searchRepo(username,"owner",pageIndex,getResources().getInteger(R.integer.per_page));
+                //searchRepo(String.format(getResources().getString(R.string.post_link), username, pageIndex, getResources().getInteger(R.integer.per_page)));
             }
         });
 
@@ -103,31 +103,20 @@ public class SearchResultFragment extends Fragment {
         mRecyclerView.setLayoutManager(mGridLayoutManager);
     }
 
-
-    public void searchRepo(String link) {
-
-        final Gson gson = new Gson();
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader("User-Agent", getResources().getString(R.string.user_agent));
-        client.get(link, new AsyncHttpResponseHandler() {
-
+    public void searchRepo(String user, String type, int page, int perPage) {
+        if (isFirstPage())
+            progressDialog = ProjectPreferences.dialogShow(getActivity(), "Loading repos!", "Please wait...");
+        IRepo iRepo =
+                ApiClient.getClient().create(IRepo.class);
+        Call<List<Repo>> call = iRepo.findRepoByUserID(user,type,page,perPage);
+        call.enqueue(new Callback<List<Repo>>() {
             @Override
-            public void onStart() {
-                if (isFirstPage())
-                    progressDialog = ProjectPreferences.dialogShow(getActivity(), "Loading repos!", "Please wait...");
-            }
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+            public void onResponse(Call<List<Repo>>call, Response<List<Repo>> response) {
                 if (hasItem()) {
                     repos.remove(repos.size() - 1);
                     mRepoListAdapter.notifyItemRemoved(repos.size());
                 }
-
-                String result = new String(response);
-                Type listType = new TypeToken<ArrayList<Repo>>() {
-                }.getType();
-                List<Repo> reposTemp = gson.fromJson(result, listType);
+                List<Repo> reposTemp = response.body();
                 repos.addAll(reposTemp);
 
                 mRepoListAdapter.notifyDataSetChanged();
@@ -135,18 +124,10 @@ public class SearchResultFragment extends Fragment {
 
                 if (isFirstPage())
                     progressDialog.dismiss();
-
                 pageIndex++;
             }
-
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                progressDialog.dismiss();
-            }
-
-            @Override
-            public void onRetry(int retryNo) {
-                progressDialog.dismiss();
+            public void onFailure(Call<List<Repo>>call, Throwable t) {
             }
         });
     }
