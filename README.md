@@ -1,1 +1,3 @@
-# GitSearchApp developed for example project for a company.
+#GitSearchApp
+GitSearchApp is an Android application. 
+It search user's reposiroty and listing.
