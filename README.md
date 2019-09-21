@@ -1,3 +1,3 @@
-#GitSearchApp
-GitSearchApp is an Android application. 
-It search user's reposiroty and listing.
+# GitSearchApp <br />
+GitSearchApp is an Android application. <br />
+It search user's reposiroty and listing.<br />
