@@ -1,0 +1,13 @@
+workflows:
+  my-workflow:
+    instance_type: linux
+    environment:
+      java: 1.8
+    scripts:
+      - name: Launch emulator
+        script: |
+          set -e # exit on first failed command
+
+          cd $ANDROID_HOME/tools
+          emulator -avd emulator &
+          adb wait-for-device
